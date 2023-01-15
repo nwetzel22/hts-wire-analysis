@@ -1,12 +1,19 @@
+import { ListItem, ListItemButton } from "@mui/material";
 import { Wire } from "./WireList";
 import styles from './WireListItem.module.css';
 
+const dateFormatter = (d: Date) => {
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric'});
+}
+
 const WireListItem = (wire: Wire) => {
     return (
-        <li className={styles['wire-list-item']}>
-            <div>{wire.title}</div>
-            <div>{wire.date.toDateString()}</div>
-        </li>
+        <ListItem sx={{padding: 0}}>
+            <ListItemButton sx={{display: 'flex', justifyContent: 'space-between'}}>
+                <div>{wire.title}</div>
+                <div>{dateFormatter(wire.date)}</div>
+            </ListItemButton>
+        </ListItem>
     );
 }
 
