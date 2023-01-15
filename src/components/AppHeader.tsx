@@ -7,9 +7,9 @@ import Typography from '@mui/material/Typography';
 const AppHeader = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
+      <AppBar position='static' color='transparent' variant='outlined'>
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
             HTS Wire Analysis
           </Typography>
         </Toolbar>
