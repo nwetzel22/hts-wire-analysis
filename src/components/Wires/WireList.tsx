@@ -1,6 +1,7 @@
-import { Divider, List, Paper, SelectChangeEvent } from "@mui/material";
-import { Fragment, useState } from "react";
+import { Box, Divider, List, Paper, SelectChangeEvent } from "@mui/material";
+import { ChangeEvent, Fragment, useEffect, useState } from "react";
 import WireListItem from "./WireListItem";
+import WireSearcher from "./WireSearcher";
 import WireSorter from "./WireSorter";
 
 export interface Wire {
@@ -65,17 +66,41 @@ const DUMMIES: Wire[] = [
 ];
 
 const WireList = () => {
+  const [wires, setWires] = useState<Wire[]>(DUMMIES);
+  const [filteredWires, setFilteredWires] = useState<Wire[]>(wires);
   const [sortCategory, setSortCategory] = useState<string>("Date");
   const [sortDirection, setSortDirection] = useState<string>("asc");
+  const [searchString, setSearchString] = useState<string>("");
 
-  const handleSortCategoryChange = (
+  const wireSearcher = (searchInput: string) => {
+    if (searchInput){
+      const filteredWires = wires.filter((w) => {
+        return w.title.toLocaleLowerCase().startsWith(searchInput.toLocaleLowerCase());
+      });
+      setFilteredWires(filteredWires);
+    } else {
+      setFilteredWires([...wires]);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      wireSearcher(searchString);
+    }, 500);
+
+    return(() => {
+      clearTimeout(timer);
+    })
+  }, [searchString]);
+
+  const sortCategoryChangeHandler = (
     event: SelectChangeEvent<string>,
     child: React.ReactNode
   ) => {
     setSortCategory(event.target.value);
   };
 
-  const handleSortDirectionChange = () => {
+  const sortDirectionChangeHandler = () => {
     setSortDirection((previousValue: string) => {
       if (previousValue === "asc") {
         return "desc";
@@ -150,24 +175,30 @@ const WireList = () => {
     }
   };
 
-  DUMMIES.sort(wireSorter);
+  const searchChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchString(event.target.value);
+  };
+
+  filteredWires.sort(wireSorter);
 
   return (
     <>
-      <WireSorter
-        sx={{ mb: 1 }}
-        category={sortCategory}
-        direction={sortDirection}
-        onCategoryChange={handleSortCategoryChange}
-        onDirectionChange={handleSortDirectionChange}
-      ></WireSorter>
+      <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 1}}>
+        <WireSearcher onChange={searchChangeHandler}></WireSearcher>
+        <WireSorter
+          category={sortCategory}
+          direction={sortDirection}
+          onCategoryChange={sortCategoryChangeHandler}
+          onDirectionChange={sortDirectionChangeHandler}
+        ></WireSorter>
+      </Box>
       <Paper variant="outlined" square>
         <List sx={{ padding: 0 }}>
-          {DUMMIES.map((d, index) => {
+          {filteredWires.map((d, index) => {
             return (
               <Fragment key={d.id}>
                 <WireListItem {...d}></WireListItem>
-                {index !== DUMMIES.length - 1 && <Divider></Divider>}
+                {index !== filteredWires.length - 1 && <Divider></Divider>}
               </Fragment>
             );
           })}
