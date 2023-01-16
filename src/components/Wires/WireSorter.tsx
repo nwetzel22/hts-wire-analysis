@@ -13,7 +13,6 @@ import {
 import { ComponentPropsWithoutRef } from "react";
 
 export interface WireSorterProps extends ComponentPropsWithoutRef<"div"> {
-  sx?: object;
   category: string;
   direction: string;
   onCategoryChange: (
@@ -25,7 +24,7 @@ export interface WireSorterProps extends ComponentPropsWithoutRef<"div"> {
 
 const WireSorter = (props: WireSorterProps) => {
   return (
-    <Box sx={props.sx}>
+    <Box>
       <FormControl size="small">
         <InputLabel id="wire-sort">Sort By</InputLabel>
         <Select
