@@ -1,5 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 import { red } from '@mui/material/colors';
+import type {} from '@mui/x-date-pickers/themeAugmentation';
 
 // A custom theme for this app
 const theme = createTheme({
@@ -12,6 +13,15 @@ const theme = createTheme({
     },
     error: {
       main: red.A400,
+    },
+  },
+  components: {
+    MuiDatePicker: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'red',
+        },
+      },
     },
   },
 });

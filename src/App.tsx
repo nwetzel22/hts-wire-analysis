@@ -1,15 +1,16 @@
-import { Box } from '@mui/material';
-import * as React from 'react';
-import AppHeader from './components/AppHeader';
-import WireList from './components/WireList';
+import { Box } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import Header from "./components/Layout/Header";
+import WireList from "./components/Wires/WireList";
 
 export default function App() {
   return (
-    <>
-      <AppHeader></AppHeader>
-      <Box sx={{p: 3}}>
+    <LocalizationProvider dateAdapter={AdapterMoment}>
+      <Header></Header>
+      <Box sx={{ p: 3 }}>
         <WireList></WireList>
       </Box>
-    </>
+    </LocalizationProvider>
   );
 }
