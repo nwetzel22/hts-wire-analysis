@@ -1,11 +1,29 @@
-import { Box, Divider, List, Paper, SelectChangeEvent } from "@mui/material";
-import { ChangeEvent, Fragment, useEffect, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import {
+  Box,
+  Button,
+  Divider,
+  List,
+  Paper,
+  Portal,
+  SelectChangeEvent,
+} from "@mui/material";
+import {
+  ChangeEvent,
+  Fragment,
+  RefObject,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import AppContext from "../../contexts/AppContext";
+import WireForm from "./WireForm";
 import WireListItem from "./WireListItem";
 import WireSearcher from "./WireSearcher";
 import WireSorter from "./WireSorter";
 
 export interface Wire {
-  id: number;
+  id?: number;
   title: string;
   date: Date;
 }
@@ -66,32 +84,38 @@ const DUMMIES: Wire[] = [
 ];
 
 const WireList = () => {
-  const [wires, setWires] = useState<Wire[]>(DUMMIES);
-  const [filteredWires, setFilteredWires] = useState<Wire[]>(wires);
+  const [allWires, setAllWires] = useState<Wire[]>(DUMMIES);
+  const [processedWires, setProcessedWires] = useState<Wire[]>(allWires);
   const [sortCategory, setSortCategory] = useState<string>("Date");
   const [sortDirection, setSortDirection] = useState<string>("asc");
   const [searchString, setSearchString] = useState<string>("");
+  const [wireFormIsOpen, setWireFormIsOpen] = useState(false);
 
-  const wireSearcher = (searchInput: string) => {
-    if (searchInput){
-      const filteredWires = wires.filter((w) => {
-        return w.title.toLocaleLowerCase().startsWith(searchInput.toLocaleLowerCase());
-      });
-      setFilteredWires(filteredWires);
-    } else {
-      setFilteredWires([...wires]);
-    }
-  };
+  const appContext = useContext(AppContext);
+  const modalContainerRef = appContext.modalContainerRef as RefObject<Element>;
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      wireSearcher(searchString);
+      const _filteredWires = filterWires(allWires);
+      const _sortedWires = sortWires(_filteredWires);
+      setProcessedWires(_sortedWires);
     }, 500);
 
-    return(() => {
+    return () => {
       clearTimeout(timer);
-    })
+    };
   }, [searchString]);
+
+  useEffect(() => {
+    const _filteredWires = filterWires(allWires);
+    const _sortedWires = sortWires(_filteredWires);
+    setProcessedWires(_sortedWires);
+  }, [allWires]);
+
+  useEffect(() => {
+    const _sortedWires = sortWires(processedWires);
+    setProcessedWires(_sortedWires);
+  }, [sortCategory, sortDirection]);
 
   const sortCategoryChangeHandler = (
     event: SelectChangeEvent<string>,
@@ -108,6 +132,41 @@ const WireList = () => {
         return "asc";
       }
     });
+  };
+
+  const searchChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchString(event.target.value);
+  };
+
+  const newWireClickHandler = () => {
+    setWireFormIsOpen(true);
+  };
+
+  const closeWireFormHandler = () => {
+    setWireFormIsOpen(false);
+  };
+
+  const submitWireFormHander = (wire: Wire) => {
+    const _wires = [...allWires, wire];
+    setAllWires(_wires);
+  };
+
+  const filterWires = (wires: Wire[]): Wire[] => {
+    if (searchString) {
+      const filteredWires = wires.filter((w) => {
+        return w.title
+          .toLocaleLowerCase()
+          .startsWith(searchString.toLocaleLowerCase());
+      });
+      return filteredWires;
+    } else {
+      return [...wires];
+    }
+  };
+
+  const sortWires = (wires: Wire[]): Wire[] => {
+    const sortedWires = [...wires.sort(wireSorter)];
+    return sortedWires;
   };
 
   const wireSorter = (w1: Wire, w2: Wire): 1 | 0 | -1 => {
@@ -132,9 +191,12 @@ const WireList = () => {
       }
     } else {
       let index = 0;
-      while (index < w1.title.length && index < w2.title.length) {
-        let w1Char = w1.title.charCodeAt(index);
-        let w2Char = w2.title.charCodeAt(index);
+      const w1Title = w1.title.toLocaleLowerCase();
+      const w2Title = w2.title.toLocaleLowerCase();
+
+      while (index < w1Title.length && index < w2Title.length) {
+        let w1Char = w1Title.charCodeAt(index);
+        let w2Char = w2Title.charCodeAt(index);
 
         if (sortDirection === "asc") {
           if (w1Char > w2Char) {
@@ -153,7 +215,7 @@ const WireList = () => {
         index += 1;
       }
 
-      let lengthDifference = w1.title.length - w2.title.length;
+      let lengthDifference = w1Title.length - w2Title.length;
 
       if (sortDirection === "asc") {
         if (lengthDifference < 0) {
@@ -175,30 +237,43 @@ const WireList = () => {
     }
   };
 
-  const searchChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    setSearchString(event.target.value);
-  };
-
-  filteredWires.sort(wireSorter);
-
   return (
     <>
-      <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 1}}>
-        <WireSearcher onChange={searchChangeHandler}></WireSearcher>
-        <WireSorter
-          category={sortCategory}
-          direction={sortDirection}
-          onCategoryChange={sortCategoryChangeHandler}
-          onDirectionChange={sortDirectionChangeHandler}
-        ></WireSorter>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        <Box sx={{ display: "flex" }}>
+          <WireSearcher
+            sx={{ mr: 1 }}
+            onChange={searchChangeHandler}
+          ></WireSearcher>
+          <WireSorter
+            category={sortCategory}
+            direction={sortDirection}
+            onCategoryChange={sortCategoryChangeHandler}
+            onDirectionChange={sortDirectionChangeHandler}
+          ></WireSorter>
+        </Box>
+        <Button
+          onClick={newWireClickHandler}
+          variant="outlined"
+          startIcon={<AddIcon />}
+        >
+          New Wire
+        </Button>
+        <Portal container={modalContainerRef.current}>
+          <WireForm
+            isOpen={wireFormIsOpen}
+            closeHandler={closeWireFormHandler}
+            submitHandler={submitWireFormHander}
+          ></WireForm>
+        </Portal>
       </Box>
       <Paper variant="outlined" square>
         <List sx={{ padding: 0 }}>
-          {filteredWires.map((d, index) => {
+          {processedWires.map((d, index) => {
             return (
               <Fragment key={d.id}>
                 <WireListItem {...d}></WireListItem>
-                {index !== filteredWires.length - 1 && <Divider></Divider>}
+                {index !== processedWires.length - 1 && <Divider></Divider>}
               </Fragment>
             );
           })}
