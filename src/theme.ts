@@ -1,6 +1,6 @@
-import { createTheme } from '@mui/material/styles';
 import { red } from '@mui/material/colors';
-import type {} from '@mui/x-date-pickers/themeAugmentation';
+import { createTheme } from '@mui/material/styles';
+import type { } from '@mui/x-date-pickers/themeAugmentation';
 
 // A custom theme for this app
 const theme = createTheme({
