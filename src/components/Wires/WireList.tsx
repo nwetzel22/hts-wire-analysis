@@ -151,6 +151,11 @@ const WireList = () => {
     setAllWires(_wires);
   };
 
+  const deleteWireHandler = (wire: Wire) => {
+    const _wires = allWires.filter((w) => w.id !== wire.id);
+    setAllWires(_wires);
+  };
+
   const filterWires = (wires: Wire[]): Wire[] => {
     if (searchString) {
       const filteredWires = wires.filter((w) => {
@@ -269,10 +274,10 @@ const WireList = () => {
       </Box>
       <Paper variant="outlined" square>
         <List sx={{ padding: 0 }}>
-          {processedWires.map((d, index) => {
+          {processedWires.map((wire, index) => {
             return (
-              <Fragment key={d.id}>
-                <WireListItem {...d}></WireListItem>
+              <Fragment key={wire.id}>
+                <WireListItem deleteHandler={deleteWireHandler} wire={wire}></WireListItem>
                 {index !== processedWires.length - 1 && <Divider></Divider>}
               </Fragment>
             );
