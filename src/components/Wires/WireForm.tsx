@@ -126,7 +126,7 @@ const WireForm = (props: WireFormProps) => {
   };
 
   return (
-    <Dialog open={true} onClose={handleClose}>
+    <Dialog open={true} onClose={handleClose} fullWidth={true} maxWidth={"sm"}>
       <DialogTitle>New Wire</DialogTitle>
       <DialogContent>
         <Box component="form" sx={{ mt: 1 }} noValidate>
@@ -153,6 +153,7 @@ const WireForm = (props: WireFormProps) => {
             renderInput={(params) => (
               <TextField
                 {...params}
+                fullWidth
                 sx={{ display: "block", mt: 1 }}
                 error={wireFormState.dateIsValid === false}
                 helperText={
