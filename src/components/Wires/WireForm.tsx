@@ -16,12 +16,13 @@ import {
 import { Wire } from "./WireList";
 
 interface WireFormProps extends ComponentPropsWithoutRef<"div"> {
-  isOpen: boolean;
+  wire: Wire | null;
   closeHandler: () => void;
   submitHandler: (wire: Wire) => void;
 }
 
 interface WireFormState {
+  id: number | null;
   title: string;
   titleIsValid: boolean | null;
   date: string | null;
@@ -30,6 +31,7 @@ interface WireFormState {
 }
 
 const defaultState: WireFormState = {
+  id: null,
   title: "",
   titleIsValid: null,
   date: "",
@@ -38,12 +40,26 @@ const defaultState: WireFormState = {
 };
 
 const WireForm = (props: WireFormProps) => {
-  const [wireFormState, setWireFormState] =
-    useState<WireFormState>(defaultState);
+  const setDefaultState = (wire: Wire | null): WireFormState => {
+    if (wire) {
+      const dateString = moment(wire.date).format('MM/DD/YYYY').toString();
 
-  useEffect(() => {
-    setWireFormState({ ...wireFormState, formIsValid: validateForm() });
-  }, [wireFormState.dateIsValid, wireFormState.titleIsValid]);
+      const state: WireFormState = {
+        id: wire.id,
+        title: wire.title,
+        titleIsValid: validateTitle(wire.title),
+        date: dateString,
+        dateIsValid: validateDate(dateString),
+        formIsValid: false
+      };
+
+      state.formIsValid = validateForm(state);
+
+      return state;
+    } else {
+      return defaultState;
+    }
+  }
 
   const validateTitle = (title: string): boolean => {
     return title !== null && title.trim().length > 0;
@@ -58,11 +74,19 @@ const WireForm = (props: WireFormProps) => {
     }
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = (wireFormState: WireFormState): boolean => {
     return (
       wireFormState.dateIsValid === true && wireFormState.titleIsValid === true
     );
   };
+
+  const [wireFormState, setWireFormState] =
+    useState<WireFormState>(setDefaultState(props.wire));
+
+  useEffect(() => {
+    const formIsValid = validateForm(wireFormState);
+    setWireFormState({ ...wireFormState, formIsValid: formIsValid });
+  }, [wireFormState.dateIsValid, wireFormState.titleIsValid]);
 
   const titleChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
     const titleInput = event.target.value;
@@ -76,7 +100,6 @@ const WireForm = (props: WireFormProps) => {
   };
 
   const dateChangeHandler = (value: string | null) => {
-    console.log("Date change handler");
     setWireFormState((previous: WireFormState) => {
       return { ...previous, date: value, dateIsValid: validateDate(value) };
     });
@@ -85,7 +108,7 @@ const WireForm = (props: WireFormProps) => {
   const handleSubmitClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (wireFormState.formIsValid) {
       const wire: Wire = {
-        id: Math.random(),
+        id: wireFormState.id || Math.random(),
         title: wireFormState.title,
         date: moment(wireFormState.date).toDate(),
       };
@@ -103,7 +126,7 @@ const WireForm = (props: WireFormProps) => {
   };
 
   return (
-    <Dialog open={props.isOpen} onClose={handleClose}>
+    <Dialog open={true} onClose={handleClose}>
       <DialogTitle>New Wire</DialogTitle>
       <DialogContent>
         <Box component="form" sx={{ mt: 1 }} noValidate>
