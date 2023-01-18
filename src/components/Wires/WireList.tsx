@@ -23,7 +23,7 @@ import WireSearcher from "./WireSearcher";
 import WireSorter from "./WireSorter";
 
 export interface Wire {
-  id?: number;
+  id: number | null;
   title: string;
   date: Date;
 }
@@ -90,6 +90,7 @@ const WireList = () => {
   const [sortDirection, setSortDirection] = useState<string>("asc");
   const [searchString, setSearchString] = useState<string>("");
   const [wireFormIsOpen, setWireFormIsOpen] = useState(false);
+  const [wireToEdit, setWireToEdit] = useState<Wire | null>(null);
 
   const appContext = useContext(AppContext);
   const modalContainerRef = appContext.modalContainerRef as RefObject<Element>;
@@ -147,13 +148,20 @@ const WireList = () => {
   };
 
   const submitWireFormHander = (wire: Wire) => {
-    const _wires = [...allWires, wire];
-    setAllWires(_wires);
+    const unmatchedWires = allWires.filter((w) => wire.id !== w.id);
+    const wires = [...unmatchedWires, wire];
+    setWireToEdit(null);
+    setAllWires(wires);
   };
 
   const deleteWireHandler = (wire: Wire) => {
     const _wires = allWires.filter((w) => w.id !== wire.id);
     setAllWires(_wires);
+  };
+
+  const editWireHandler = (wire: Wire) => {
+    setWireToEdit(wire);
+    setWireFormIsOpen(true);
   };
 
   const filterWires = (wires: Wire[]): Wire[] => {
@@ -265,11 +273,13 @@ const WireList = () => {
           New Wire
         </Button>
         <Portal container={modalContainerRef.current}>
-          <WireForm
-            isOpen={wireFormIsOpen}
-            closeHandler={closeWireFormHandler}
-            submitHandler={submitWireFormHander}
-          ></WireForm>
+          {wireFormIsOpen && (
+            <WireForm
+              wire={wireToEdit}
+              closeHandler={closeWireFormHandler}
+              submitHandler={submitWireFormHander}
+            ></WireForm>
+          )}
         </Portal>
       </Box>
       <Paper variant="outlined" square>
@@ -277,7 +287,11 @@ const WireList = () => {
           {processedWires.map((wire, index) => {
             return (
               <Fragment key={wire.id}>
-                <WireListItem deleteHandler={deleteWireHandler} wire={wire}></WireListItem>
+                <WireListItem
+                  deleteHandler={deleteWireHandler}
+                  editHandler={editWireHandler}
+                  wire={wire}
+                ></WireListItem>
                 {index !== processedWires.length - 1 && <Divider></Divider>}
               </Fragment>
             );
