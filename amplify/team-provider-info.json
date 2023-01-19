@@ -1,0 +1,15 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-htswireanalysis-dev-221537-authRole",
+      "UnauthRoleArn": "arn:aws:iam::873363243617:role/amplify-htswireanalysis-dev-221537-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::873363243617:role/amplify-htswireanalysis-dev-221537-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-htswireanalysis-dev-221537-deployment",
+      "UnauthRoleName": "amplify-htswireanalysis-dev-221537-unauthRole",
+      "StackName": "amplify-htswireanalysis-dev-221537",
+      "StackId": "arn:aws:cloudformation:us-east-2:873363243617:stack/amplify-htswireanalysis-dev-221537/8c2c9ce0-97a7-11ed-89c2-025c9e5ac756",
+      "AmplifyAppId": "d3dut28mxyb2ev"
+    }
+  }
+}
