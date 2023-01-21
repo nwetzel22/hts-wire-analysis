@@ -6,14 +6,14 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import { Box } from "@mui/system";
 import { DatePicker } from "@mui/x-date-pickers";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import {
   ChangeEvent,
   ComponentPropsWithoutRef,
   useEffect,
   useState,
 } from "react";
-import { Wire } from "./WireList";
+import { Wire } from "../../models";
 
 interface WireFormProps extends ComponentPropsWithoutRef<"div"> {
   wire: Wire | null;
@@ -22,16 +22,14 @@ interface WireFormProps extends ComponentPropsWithoutRef<"div"> {
 }
 
 interface WireFormState {
-  id: number | null;
   title: string;
   titleIsValid: boolean | null;
-  date: string | null;
+  date: string | null | undefined;
   dateIsValid: boolean | null;
   formIsValid: boolean;
 }
 
 const defaultState: WireFormState = {
-  id: null,
   title: "",
   titleIsValid: null,
   date: "",
@@ -42,10 +40,9 @@ const defaultState: WireFormState = {
 const WireForm = (props: WireFormProps) => {
   const setDefaultState = (wire: Wire | null): WireFormState => {
     if (wire) {
-      const dateString = moment(wire.date).format('MM/DD/YYYY').toString();
+      const dateString = moment(wire.date).format('YYYY-MM-DD').toString();
 
       const state: WireFormState = {
-        id: wire.id,
         title: wire.title,
         titleIsValid: validateTitle(wire.title),
         date: dateString,
@@ -65,12 +62,12 @@ const WireForm = (props: WireFormProps) => {
     return title !== null && title.trim().length > 0;
   };
 
-  const validateDate = (date: string | null): boolean => {
-    if (date === null) {
-      return false;
-    } else {
+  const validateDate = (date: string | null | undefined): boolean => {
+    if (date) {
       const _moment = moment(date);
       return _moment.isValid();
+    } else {
+      return false;
     }
   };
 
@@ -99,19 +96,35 @@ const WireForm = (props: WireFormProps) => {
     });
   };
 
-  const dateChangeHandler = (value: string | null) => {
+  const dateChangeHandler = (value: Moment | null, input?: string | undefined) => {
+    console.log(value);
     setWireFormState((previous: WireFormState) => {
-      return { ...previous, date: value, dateIsValid: validateDate(value) };
+      let date: string | null = null;
+      let dateIsValid = false;
+      if (value) {
+        date = value.format('YYYY-MM-DD').toString();
+        dateIsValid = value.isValid();
+      }
+      return { ...previous, date, dateIsValid };
     });
   };
 
   const handleSubmitClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (wireFormState.formIsValid) {
-      const wire: Wire = {
-        id: wireFormState.id || Math.random(),
-        title: wireFormState.title,
-        date: moment(wireFormState.date).toDate(),
-      };
+      let wire: Wire;
+
+      if (props.wire) {
+        wire = Wire.copyOf(props.wire, wire => {
+          wire.title = wireFormState.title;
+          wire.date = wireFormState.date as string;
+        });
+      } else {
+        console.log(wireFormState.date);
+        wire = new Wire({
+          title: wireFormState.title,
+          date: wireFormState.date as string,
+        });
+      }
 
       props.submitHandler(wire);
       props.closeHandler();
@@ -126,7 +139,7 @@ const WireForm = (props: WireFormProps) => {
   };
 
   return (
-    <Dialog open={true} onClose={handleClose}>
+    <Dialog open={true} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>New Wire</DialogTitle>
       <DialogContent>
         <Box component="form" sx={{ mt: 1 }} noValidate>
@@ -147,12 +160,13 @@ const WireForm = (props: WireFormProps) => {
           />
           <DatePicker
             label="Date"
-            inputFormat="MM/DD/YYYY"
+            inputFormat="YYYY-MM-DD"
             value={wireFormState.date}
             onChange={dateChangeHandler}
             renderInput={(params) => (
               <TextField
                 {...params}
+                fullWidth
                 sx={{ display: "block", mt: 1 }}
                 error={wireFormState.dateIsValid === false}
                 helperText={

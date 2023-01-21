@@ -1,7 +1,7 @@
 export const schema = {
     "models": {
-        "WireSample": {
-            "name": "WireSample",
+        "Wire": {
+            "name": "Wire",
             "fields": {
                 "id": {
                     "name": "id",
@@ -42,7 +42,7 @@ export const schema = {
                 }
             },
             "syncable": true,
-            "pluralName": "WireSamples",
+            "pluralName": "Wires",
             "attributes": [
                 {
                     "type": "model",
@@ -70,5 +70,5 @@ export const schema = {
     "enums": {},
     "nonModels": {},
     "codegenVersion": "3.3.5",
-    "version": "0fc52c7eb0c2592512d4f594221c2d3d"
+    "version": "40745434d33d8fbadba40cbff69e4837"
 };

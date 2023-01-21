@@ -6,9 +6,9 @@ import { LazyLoading, LazyLoadingDisabled } from "@aws-amplify/datastore";
 
 
 
-type EagerWireSample = {
+type EagerWire = {
   readonly [__modelMeta__]: {
-    identifier: ManagedIdentifier<WireSample, 'id'>;
+    identifier: ManagedIdentifier<Wire, 'id'>;
     readOnlyFields: 'createdAt' | 'updatedAt';
   };
   readonly id: string;
@@ -18,9 +18,9 @@ type EagerWireSample = {
   readonly updatedAt?: string | null;
 }
 
-type LazyWireSample = {
+type LazyWire = {
   readonly [__modelMeta__]: {
-    identifier: ManagedIdentifier<WireSample, 'id'>;
+    identifier: ManagedIdentifier<Wire, 'id'>;
     readOnlyFields: 'createdAt' | 'updatedAt';
   };
   readonly id: string;
@@ -30,8 +30,8 @@ type LazyWireSample = {
   readonly updatedAt?: string | null;
 }
 
-export declare type WireSample = LazyLoading extends LazyLoadingDisabled ? EagerWireSample : LazyWireSample
+export declare type Wire = LazyLoading extends LazyLoadingDisabled ? EagerWire : LazyWire
 
-export declare const WireSample: (new (init: ModelInit<WireSample>) => WireSample) & {
-  copyOf(source: WireSample, mutator: (draft: MutableModel<WireSample>) => MutableModel<WireSample> | void): WireSample;
+export declare const Wire: (new (init: ModelInit<Wire>) => Wire) & {
+  copyOf(source: Wire, mutator: (draft: MutableModel<Wire>) => MutableModel<Wire> | void): Wire;
 }

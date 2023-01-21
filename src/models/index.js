@@ -4,8 +4,8 @@ import { schema } from './schema';
 
 
 
-const { WireSample } = initSchema(schema);
+const { Wire } = initSchema(schema);
 
 export {
-  WireSample
+  Wire
 };
