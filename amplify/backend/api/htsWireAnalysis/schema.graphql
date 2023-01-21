@@ -1,0 +1,6 @@
+type Wire @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  title: String!
+  date: AWSDate!
+}
+ 
