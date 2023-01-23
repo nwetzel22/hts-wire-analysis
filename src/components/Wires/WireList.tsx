@@ -97,7 +97,6 @@ const WireList = () => {
   const fetchWires = async () => {
     try {
       const wires = await DataStore.query(Wire);
-      console.log("Fetched", wires);
       setWires(wires);
     } catch {
       throw Error("Error fetching wires.");
@@ -215,6 +214,7 @@ const WireList = () => {
 
   const closeWireFormHandler = useCallback(() => {
     setWireFormIsOpen(false);
+    setWireToEdit(null);
   }, []);
 
   const submitWireFormHander = useCallback(async (wire: Wire) => {
