@@ -8,84 +8,82 @@ import {
   Portal,
   SelectChangeEvent,
 } from "@mui/material";
+import { DataStore } from "aws-amplify";
+import moment from "moment";
 import {
   ChangeEvent,
   Fragment,
   RefObject,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import AppContext from "../../contexts/AppContext";
+import { Wire } from "../../models";
 import WireForm from "./WireForm";
 import WireListItem from "./WireListItem";
 import WireSearcher from "./WireSearcher";
 import WireSorter from "./WireSorter";
 
-export interface Wire {
-  id: number | null;
-  title: string;
-  date: Date;
-}
-
-const DUMMIES: Wire[] = [
-  { title: "AMSC Amperium® 2G HTS", date: new Date(2014, 10, 30), id: 1 },
-  {
-    title: "AMSC Amperium® Type 8502-350 coil formulation 2G HTS",
-    date: new Date(2019, 7, 1),
-    id: 2,
-  },
-  {
-    title: "AMSC Amperium® Type 8700 cable formulation 2G HTS",
-    date: new Date(2017, 10, 4),
-    id: 3,
-  },
-  {
-    title: "AMSC Amperium® Type 8702 non-magnetic cable formulation 2G HTS",
-    date: new Date(2017, 10, 4),
-    id: 4,
-  },
-  { title: "Fujikura FESC 2G HTS", date: new Date(2021, 8, 18), id: 5 },
-  { title: "Fujikura FYSC 2G HTS", date: new Date(2021, 10, 28), id: 6 },
-  { title: "InnoST 1G HTS", date: new Date(2019, 10, 22), id: 7 },
-  { title: "Nexans Bi-2212", date: new Date(2016, 8, 25), id: 8 },
-  { title: "Samri 2G HTS", date: new Date(2019, 4, 29), id: 9 },
-  {
-    title: "Shanghai Creative Superconductor Technologies 2G HTS",
-    date: new Date(2017, 8, 15),
-    id: 10,
-  },
-  {
-    title: "Shanghai Superconductor High Field Low Temperature 2G HTS",
-    date: new Date(2022, 2, 20),
-    id: 11,
-  },
-  {
-    title: "Shanghai Superconductor Low Field High Temperature 2G HTS",
-    date: new Date(2022, 2, 20),
-    id: 12,
-  },
-  { title: "STI Conductus® 2G HTS", date: new Date(2016, 8, 25), id: 13 },
-  {
-    title: "Sumitomo new type H DI-BSCCO®",
-    date: new Date(2014, 10, 6),
-    id: 14,
-  },
-  { title: "SuNAM HAN04200 2G HTS", date: new Date(2017, 7, 7), id: 15 },
-  { title: "SuNAM HAN04200 2G HTS", date: new Date(2017, 7, 7), id: 16 },
-  { title: "SuperOx GdBCO 2G HTS", date: new Date(2021, 2, 3), id: 17 },
-  { title: "SuperOx YBCO 2G HTS", date: new Date(2021, 2, 4), id: 18 },
-  {
-    title: "SuperPower Advanced Pinning 2G HTS",
-    date: new Date(2021, 3, 1),
-    id: 19,
-  },
-  { title: "THEVA Pro-Line 2G HTS", date: new Date(2019, 2, 19), id: 20 },
-];
+// const DUMMIES: Wire[] = [
+//   { title: "AMSC Amperium® 2G HTS", date: new Date(2014, 10, 30), id: 1 },
+//   {
+//     title: "AMSC Amperium® Type 8502-350 coil formulation 2G HTS",
+//     date: new Date(2019, 7, 1),
+//     id: 2,
+//   },
+//   {
+//     title: "AMSC Amperium® Type 8700 cable formulation 2G HTS",
+//     date: new Date(2017, 10, 4),
+//     id: 3,
+//   },
+//   {
+//     title: "AMSC Amperium® Type 8702 non-magnetic cable formulation 2G HTS",
+//     date: new Date(2017, 10, 4),
+//     id: 4,
+//   },
+//   { title: "Fujikura FESC 2G HTS", date: new Date(2021, 8, 18), id: 5 },
+//   { title: "Fujikura FYSC 2G HTS", date: new Date(2021, 10, 28), id: 6 },
+//   { title: "InnoST 1G HTS", date: new Date(2019, 10, 22), id: 7 },
+//   { title: "Nexans Bi-2212", date: new Date(2016, 8, 25), id: 8 },
+//   { title: "Samri 2G HTS", date: new Date(2019, 4, 29), id: 9 },
+//   {
+//     title: "Shanghai Creative Superconductor Technologies 2G HTS",
+//     date: new Date(2017, 8, 15),
+//     id: 10,
+//   },
+//   {
+//     title: "Shanghai Superconductor High Field Low Temperature 2G HTS",
+//     date: new Date(2022, 2, 20),
+//     id: 11,
+//   },
+//   {
+//     title: "Shanghai Superconductor Low Field High Temperature 2G HTS",
+//     date: new Date(2022, 2, 20),
+//     id: 12,
+//   },
+//   { title: "STI Conductus® 2G HTS", date: new Date(2016, 8, 25), id: 13 },
+//   {
+//     title: "Sumitomo new type H DI-BSCCO®",
+//     date: new Date(2014, 10, 6),
+//     id: 14,
+//   },
+//   { title: "SuNAM HAN04200 2G HTS", date: new Date(2017, 7, 7), id: 15 },
+//   { title: "SuNAM HAN04200 2G HTS", date: new Date(2017, 7, 7), id: 16 },
+//   { title: "SuperOx GdBCO 2G HTS", date: new Date(2021, 2, 3), id: 17 },
+//   { title: "SuperOx YBCO 2G HTS", date: new Date(2021, 2, 4), id: 18 },
+//   {
+//     title: "SuperPower Advanced Pinning 2G HTS",
+//     date: new Date(2021, 3, 1),
+//     id: 19,
+//   },
+//   { title: "THEVA Pro-Line 2G HTS", date: new Date(2019, 2, 19), id: 20 },
+// ];
 
 const WireList = () => {
-  const [allWires, setAllWires] = useState<Wire[]>(DUMMIES);
-  const [processedWires, setProcessedWires] = useState<Wire[]>(allWires);
+  const [wires, setWires] = useState<Wire[]>([]);
   const [sortCategory, setSortCategory] = useState<string>("Date");
   const [sortDirection, setSortDirection] = useState<string>("asc");
   const [searchString, setSearchString] = useState<string>("");
@@ -94,74 +92,31 @@ const WireList = () => {
 
   const appContext = useContext(AppContext);
   const modalContainerRef = appContext.modalContainerRef as RefObject<Element>;
+  const timer = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const _filteredWires = filterWires(allWires);
-      const _sortedWires = sortWires(_filteredWires);
-      setProcessedWires(_sortedWires);
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchString]);
-
-  useEffect(() => {
-    const _filteredWires = filterWires(allWires);
-    const _sortedWires = sortWires(_filteredWires);
-    setProcessedWires(_sortedWires);
-  }, [allWires]);
-
-  useEffect(() => {
-    const _sortedWires = sortWires(processedWires);
-    setProcessedWires(_sortedWires);
-  }, [sortCategory, sortDirection]);
-
-  const sortCategoryChangeHandler = (
-    event: SelectChangeEvent<string>,
-    child: React.ReactNode
-  ) => {
-    setSortCategory(event.target.value);
+  const fetchWires = async () => {
+    try {
+      const wires = await DataStore.query(Wire);
+      setWires(wires);
+    } catch {
+      throw Error("Error fetching wires.");
+    }
   };
 
-  const sortDirectionChangeHandler = () => {
-    setSortDirection((previousValue: string) => {
-      if (previousValue === "asc") {
-        return "desc";
-      } else {
-        return "asc";
-      }
-    });
+  const saveWire = async (wire: Wire) => {
+    try {
+      await DataStore.save(wire);
+    } catch {
+      throw Error("Error saving wire.");
+    }
   };
 
-  const searchChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    setSearchString(event.target.value);
-  };
-
-  const newWireClickHandler = () => {
-    setWireFormIsOpen(true);
-  };
-
-  const closeWireFormHandler = () => {
-    setWireFormIsOpen(false);
-  };
-
-  const submitWireFormHander = (wire: Wire) => {
-    const unmatchedWires = allWires.filter((w) => wire.id !== w.id);
-    const wires = [...unmatchedWires, wire];
-    setWireToEdit(null);
-    setAllWires(wires);
-  };
-
-  const deleteWireHandler = (wire: Wire) => {
-    const _wires = allWires.filter((w) => w.id !== wire.id);
-    setAllWires(_wires);
-  };
-
-  const editWireHandler = (wire: Wire) => {
-    setWireToEdit(wire);
-    setWireFormIsOpen(true);
+  const deleteWire = async (wire: Wire) => {
+    try {
+      await DataStore.delete(wire);
+    } catch {
+      throw Error("Error deleting wire.");
+    }
   };
 
   const filterWires = (wires: Wire[]): Wire[] => {
@@ -177,30 +132,14 @@ const WireList = () => {
     }
   };
 
-  const sortWires = (wires: Wire[]): Wire[] => {
-    const sortedWires = [...wires.sort(wireSorter)];
-    return sortedWires;
-  };
-
-  const wireSorter = (w1: Wire, w2: Wire): 1 | 0 | -1 => {
+  const wireSorter = (w1: Wire, w2: Wire): number => {
     if (sortCategory === "Date") {
-      const difference = w1.date.getTime() - w2.date.getTime();
+      const difference = moment(w1.date).diff(w2.date);
+
       if (sortDirection === "asc") {
-        if (difference > 0) {
-          return -1;
-        } else if (difference < 0) {
-          return 1;
-        } else {
-          return 0;
-        }
+        return difference;
       } else {
-        if (difference > 0) {
-          return 1;
-        } else if (difference < 0) {
-          return -1;
-        } else {
-          return 0;
-        }
+        return -difference;
       }
     } else {
       let index = 0;
@@ -210,18 +149,15 @@ const WireList = () => {
       while (index < w1Title.length && index < w2Title.length) {
         let w1Char = w1Title.charCodeAt(index);
         let w2Char = w2Title.charCodeAt(index);
+        let difference = w1Char - w2Char;
 
         if (sortDirection === "asc") {
-          if (w1Char > w2Char) {
-            return -1;
-          } else if (w1Char < w2Char) {
-            return 1;
+          if (w1Char !== w2Char) {
+            return difference;
           }
         } else {
-          if (w1Char > w2Char) {
-            return 1;
-          } else if (w1Char < w2Char) {
-            return -1;
+          if (w1Char !== w2Char) {
+            return -difference;
           }
         }
 
@@ -231,24 +167,75 @@ const WireList = () => {
       let lengthDifference = w1Title.length - w2Title.length;
 
       if (sortDirection === "asc") {
-        if (lengthDifference < 0) {
-          return 1;
-        } else if (lengthDifference > 0) {
-          return -1;
-        } else {
-          return 0;
-        }
+        return lengthDifference;
       } else {
-        if (lengthDifference < 0) {
-          return -1;
-        } else if (lengthDifference > 0) {
-          return 1;
-        } else {
-          return 0;
-        }
+        return -lengthDifference;
       }
     }
   };
+
+  const sortWires = (wires: Wire[]): Wire[] => {
+    const sortedWires = [...wires].sort(wireSorter);
+    return sortedWires;
+  };
+
+  useEffect(() => {
+    fetchWires();
+  }, []);
+
+  const sortCategoryChangeHandler = useCallback((
+    event: SelectChangeEvent<string>,
+  ) => {
+    setSortCategory(event.target.value);
+  }, []);
+
+  const sortDirectionChangeHandler = useCallback(() => {
+    setSortDirection((previousValue: string) => {
+      if (previousValue === "asc") {
+        return "desc";
+      } else {
+        return "asc";
+      }
+    });
+  }, []);
+
+  const searchChangeHandler = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+    }
+    timer.current = setTimeout(() => {
+      setSearchString(event.target.value);
+    }, 500);
+  }, []);
+
+  const newWireClickHandler = useCallback(() => {
+    setWireFormIsOpen(true);
+  }, []);
+
+  const closeWireFormHandler = useCallback(() => {
+    setWireFormIsOpen(false);
+    setWireToEdit(null);
+  }, []);
+
+  const submitWireFormHander = useCallback(async (wire: Wire) => {
+    await saveWire(wire);
+    await fetchWires();
+    setWireToEdit(null);
+  }, []);
+
+  const deleteWireHandler = useCallback(async (wire: Wire) => {
+    await deleteWire(wire);
+    await fetchWires();
+  }, []);
+
+  const editWireHandler = useCallback((wire: Wire) => {
+    setWireToEdit(wire);
+    setWireFormIsOpen(true);
+  }, []);
+
+  const filteredWires = filterWires(wires);
+  const sortedWires = sortWires(filteredWires);
+  const visibleWires = sortedWires;
 
   return (
     <>
@@ -284,18 +271,20 @@ const WireList = () => {
       </Box>
       <Paper variant="outlined" square>
         <List sx={{ padding: 0 }}>
-          {processedWires.map((wire, index) => {
-            return (
-              <Fragment key={wire.id}>
-                <WireListItem
-                  deleteHandler={deleteWireHandler}
-                  editHandler={editWireHandler}
-                  wire={wire}
-                ></WireListItem>
-                {index !== processedWires.length - 1 && <Divider></Divider>}
-              </Fragment>
-            );
-          })}
+          {visibleWires.length === 0 && <Box sx={{p: 2, textAlign: 'center'}}>No wires found.</Box>}
+          {visibleWires.length > 0 &&
+            visibleWires.map((wire, index) => {
+              return (
+                <Fragment key={wire.id}>
+                  <WireListItem
+                    deleteHandler={deleteWireHandler}
+                    editHandler={editWireHandler}
+                    wire={wire}
+                  ></WireListItem>
+                  {index !== visibleWires.length - 1 && <Divider></Divider>}
+                </Fragment>
+              );
+            })}
         </List>
       </Paper>
     </>
