@@ -1,5 +1,0 @@
-{
-  "AppSyncApiName": "htsWireAnalysis",
-  "DynamoDBBillingMode": "PAY_PER_REQUEST",
-  "DynamoDBEnableServerSideEncryption": false
-}
