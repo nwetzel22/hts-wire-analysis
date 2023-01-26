@@ -1,15 +1,12 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { Box, Button, ListItem, ListItemButton } from "@mui/material";
+import moment from "moment";
 import { ComponentPropsWithoutRef } from "react";
-import { Wire } from "./WireList";
+import { Wire } from "../../models";
 
-const dateFormatter = (d: Date) => {
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+const dateFormatter = (date: string) => {
+  return moment(date).format('MMMM D, YYYY');
 };
 
 interface WireListItemProps extends ComponentPropsWithoutRef<"div"> {

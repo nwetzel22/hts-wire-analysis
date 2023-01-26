@@ -1,7 +1,0 @@
-{
-    "AppSyncApiName": "htswireanalysis",
-    "DynamoDBBillingMode": "PAY_PER_REQUEST",
-    "DynamoDBEnableServerSideEncryption": false,
-    "S3DeploymentBucket": "amplify-amplify98640f0c6bb14-staging-212508-deployment",
-    "S3DeploymentRootKey": "amplify-appsync-files/e31e8df74847b651f83174941d43dfb93c82211f"
-}

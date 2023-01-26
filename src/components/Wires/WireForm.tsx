@@ -6,14 +6,15 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import { Box } from "@mui/system";
 import { DatePicker } from "@mui/x-date-pickers";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import {
   ChangeEvent,
   ComponentPropsWithoutRef,
-  useEffect,
+  useCallback,
+  useMemo,
   useState,
 } from "react";
-import { Wire } from "./WireList";
+import { Wire } from "../../models";
 
 interface WireFormProps extends ComponentPropsWithoutRef<"div"> {
   wire: Wire | null;
@@ -22,111 +23,155 @@ interface WireFormProps extends ComponentPropsWithoutRef<"div"> {
 }
 
 interface WireFormState {
-  id: number | null;
   title: string;
-  titleIsValid: boolean | null;
-  date: string | null;
-  dateIsValid: boolean | null;
-  formIsValid: boolean;
+  titleIsTouched: boolean;
+  date: string | null | undefined;
+  dateIsTouched: boolean;
 }
 
 const defaultState: WireFormState = {
-  id: null,
   title: "",
-  titleIsValid: null,
+  titleIsTouched: false,
   date: "",
-  dateIsValid: null,
-  formIsValid: false,
+  dateIsTouched: false,
 };
 
 const WireForm = (props: WireFormProps) => {
   const setDefaultState = (wire: Wire | null): WireFormState => {
     if (wire) {
-      const dateString = moment(wire.date).format('MM/DD/YYYY').toString();
+      const dateString = moment(wire.date).format("YYYY-MM-DD").toString();
 
       const state: WireFormState = {
-        id: wire.id,
         title: wire.title,
-        titleIsValid: validateTitle(wire.title),
+        titleIsTouched: false,
         date: dateString,
-        dateIsValid: validateDate(dateString),
-        formIsValid: false
+        dateIsTouched: false,
       };
-
-      state.formIsValid = validateForm(state);
 
       return state;
     } else {
       return defaultState;
     }
-  }
+  };
+
+  const [wireFormState, setWireFormState] = useState<WireFormState>(
+    setDefaultState(props.wire)
+  );
+
+  const titleBlurHandler = useCallback(
+    (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setWireFormState((previousState) => {
+        return { ...previousState, titleIsTouched: true };
+      });
+    },
+    []
+  );
+
+  const titleChangeHandler = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const titleInput = event.target.value;
+      setWireFormState((previous: WireFormState) => {
+        return {
+          ...previous,
+          title: titleInput,
+        };
+      });
+    },
+    []
+  );
+
+  const dateBlurHandler = useCallback(
+    (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setWireFormState((previousState) => {
+        return { ...previousState, dateIsTouched: true };
+      });
+    },
+    []
+  );
+
+  const dateChangeHandler = useCallback(
+    (value: Moment | null, input?: string | undefined) => {
+      setWireFormState((previous: WireFormState) => {
+        let date: string | null = null;
+        if (value) {
+          date = value.format("YYYY-MM-DD").toString();
+        }
+        return { ...previous, date };
+      });
+    },
+    []
+  );
 
   const validateTitle = (title: string): boolean => {
     return title !== null && title.trim().length > 0;
   };
 
-  const validateDate = (date: string | null): boolean => {
-    if (date === null) {
-      return false;
-    } else {
+  const validateDate = (date: string | null | undefined): boolean => {
+    if (date) {
       const _moment = moment(date);
       return _moment.isValid();
+    } else {
+      return false;
     }
   };
 
-  const validateForm = (wireFormState: WireFormState): boolean => {
-    return (
-      wireFormState.dateIsValid === true && wireFormState.titleIsValid === true
-    );
-  };
+  const titleIsValid = useMemo(() => validateTitle(wireFormState.title), [wireFormState.title]);
+  const dateIsValid = useMemo(() => validateDate(wireFormState.date), [wireFormState.date]);
 
-  const [wireFormState, setWireFormState] =
-    useState<WireFormState>(setDefaultState(props.wire));
+  const formIsValid = useCallback(() => {
+    return titleIsValid && dateIsValid;
+  }, [titleIsValid, dateIsValid]);
 
-  useEffect(() => {
-    const formIsValid = validateForm(wireFormState);
-    setWireFormState({ ...wireFormState, formIsValid: formIsValid });
-  }, [wireFormState.dateIsValid, wireFormState.titleIsValid]);
+  const { wire, submitHandler, closeHandler } = props;
 
-  const titleChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    const titleInput = event.target.value;
-    setWireFormState((previous: WireFormState) => {
-      return {
-        ...previous,
-        title: titleInput,
-        titleIsValid: validateTitle(titleInput),
-      };
-    });
-  };
+  const handleSubmitClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (formIsValid()) {
+        let _wire: Wire;
 
-  const dateChangeHandler = (value: string | null) => {
-    setWireFormState((previous: WireFormState) => {
-      return { ...previous, date: value, dateIsValid: validateDate(value) };
-    });
-  };
+        if (wire) {
+          _wire = Wire.copyOf(wire, (wire) => {
+            wire.title = wireFormState.title;
+            wire.date = wireFormState.date as string;
+          });
+        } else {
+          _wire = new Wire({
+            title: wireFormState.title,
+            date: wireFormState.date as string,
+          });
+        }
 
-  const handleSubmitClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (wireFormState.formIsValid) {
-      const wire: Wire = {
-        id: wireFormState.id || Math.random(),
-        title: wireFormState.title,
-        date: moment(wireFormState.date).toDate(),
-      };
+        submitHandler(_wire);
+        closeHandler();
 
-      props.submitHandler(wire);
-      props.closeHandler();
+        setWireFormState(defaultState);
+      } else {
+        setWireFormState((previousState) => {
+          return {
+            ...previousState,
+            titleIsTouched: true,
+            dateIsTouched: true,
+          };
+        });
+      }
+    },
+    [
+      formIsValid,
+      wire,
+      closeHandler,
+      submitHandler,
+      wireFormState.date,
+      wireFormState.title,
+    ]
+  );
 
-      setWireFormState(defaultState);
-    }
-  };
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setWireFormState(defaultState);
-    props.closeHandler();
-  };
+    closeHandler();
+  }, [closeHandler]);
 
   return (
-    <Dialog open={true} onClose={handleClose} fullWidth={true} maxWidth={"sm"}>
+    <Dialog disableRestoreFocus open={true} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>New Wire</DialogTitle>
       <DialogContent>
         <Box component="form" sx={{ mt: 1 }} noValidate>
@@ -140,14 +185,17 @@ const WireForm = (props: WireFormProps) => {
             value={wireFormState.title}
             onChange={titleChangeHandler}
             fullWidth
-            error={wireFormState.titleIsValid === false}
+            error={wireFormState.titleIsTouched && titleIsValid === false}
             helperText={
-              wireFormState.titleIsValid === false && "Please enter a title."
+              wireFormState.titleIsTouched &&
+              titleIsValid === false &&
+              "Please enter a title."
             }
+            onBlur={titleBlurHandler}
           />
           <DatePicker
             label="Date"
-            inputFormat="MM/DD/YYYY"
+            inputFormat="YYYY-MM-DD"
             value={wireFormState.date}
             onChange={dateChangeHandler}
             renderInput={(params) => (
@@ -155,10 +203,13 @@ const WireForm = (props: WireFormProps) => {
                 {...params}
                 fullWidth
                 sx={{ display: "block", mt: 1 }}
-                error={wireFormState.dateIsValid === false}
+                error={wireFormState.dateIsTouched && dateIsValid === false}
                 helperText={
-                  wireFormState.dateIsValid === false && "Please select a date."
+                  wireFormState.dateIsTouched &&
+                  dateIsValid === false &&
+                  "Please select a date."
                 }
+                onBlur={dateBlurHandler}
               />
             )}
           />
@@ -171,7 +222,7 @@ const WireForm = (props: WireFormProps) => {
         <Button
           onClick={handleSubmitClick}
           variant="outlined"
-          disabled={!wireFormState.formIsValid}
+          disabled={!formIsValid()}
         >
           Submit
         </Button>
